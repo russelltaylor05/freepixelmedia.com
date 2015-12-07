@@ -1,0 +1,24 @@
+{
+  "name": "freepixelmedia.com",
+  "version": "1.0.0",
+  "description": "Portfolio website containing various projects",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "express": "^4.13.3",
+    "gulp": "^3.9.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/russelltaylor05/freepixelmedia.com.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/russelltaylor05/freepixelmedia.com/issues"
+  },
+  "homepage": "https://github.com/russelltaylor05/freepixelmedia.com"
+}
