@@ -1,0 +1,330 @@
+<html>
+<head>
+  <title>Wordpress Menu Tutorial</title>
+  <link type="text/css" rel="stylesheet" href="styles.css" media="all" />
+  
+  <style type="text/css">
+    
+    img {max-width: 100%;}
+    h2 {margin-top: 40px;}
+    code {	white-space: pre-wrap; word-wrap: break-word; font-family: monospace;}  
+  </style>
+
+</head>
+<body>
+  
+    <h1>Wordpress Menu Tutorial</h1>
+    
+    <p>In this tutorial I am going to show you how to build a pure CSS drop down menu in Wordpress. I will walk you through the steps of creating a menu in Wordpress, customizing it with CSS, and then printing the menu in your theme file. This tutorial requires that you have access to edit your Wordpress theme files and also a basic understanding of HTML and CSS. I will walk through the process step-by-step so don't worry if you have never edited a wordpress theme file before. </p>
+    
+    <p><strong>Note:</strong></br> I will be using Wordpress 3.9 and the Twenty Thirteen theme for this tutorial, but all the steps should be the same for any Wordpress 3 website.</p>
+    
+    <h2>Demo</h2>
+    <p>Here is what our menu is going to look like when we are finished:</p>
+
+    <div id='cssmenu'>
+    <ul>
+       <li><a href='#'><span>Home</span></a></li>
+       <li class='has-sub'><a href='#'><span>Products</span></a>
+          <ul>
+             <li><a href='#'><span>Widgets</span></a></li>
+             <li><a href='#'><span>Menus</span></a></li>
+             <li class='last'><a href='#'><span>Products</span></a></li>
+          </ul>
+       </li>
+       <li class='has-sub'><a href='#'><span>Company</span></a>
+          <ul>
+             <li><a href='#'><span>About</span></a></li>
+             <li><a href='#'><span>Location</span></a></li>
+          </ul>
+       </li>
+       <li><a href='#'><span>Contact</span></a></li>
+    </ul>
+    </div>      
+    
+    <h2>Create a Menu in Wordpress</h2>
+    <p>Chances are you already have a menu built in the Wordpress. Wordpress 3 has an easy to use, drag-n-drop interface for you to create a menu structure. If you haven't already, go to <strong>Appearance > Menus</strong> to build and save a custom menu. Make sure to give your menu a name and remember it for later. </p>
+    
+    <img src="images/wordpress_1.png" />
+    
+    
+    <h2>Add a Custom Walker Class to functions.php</h2>
+    <p>Before we can print our menu in a Wordpress theme file, we need to add a <a href="http://codex.wordpress.org/Function_Reference/Walker_Class">Wordpress Walker Class</a> to our <strong>functions.php</strong> file. This piece of code will clean up the HTML output of our menu so that we can more easily create the CSS styles. Simply copy and paste the Walker code into your <strong>functions.php</strong> file which should be right inside your theme folder. If a <strong>functions.php</strong> file does not exist, create it and then paste the Walker Class code in.</p>
+    
+    
+    <code>
+class CSS_Menu_Walker extends Walker {
+
+  var $db_fields = array( 'parent' =&gt; 'menu_item_parent', 'id' =&gt; 'db_id' );
+  
+  function start_lvl( &$output, $depth = 0, $args = array() ) {
+    $indent = str_repeat("\t", $depth);
+    $output .= "\n$indent&lt;ul&gt;\n";
+  }
+  
+  function end_lvl( &$output, $depth = 0, $args = array() ) {
+    $indent = str_repeat("\t", $depth);
+    $output .= "$indent&lt;/ul&gt;\n";
+  }
+  
+  function start_el( &$output, $item, $depth = 0, $args = array(), $id = 0 ) {
+  
+    global $wp_query;
+    $indent = ( $depth ) ? str_repeat( "\t", $depth ) : '';
+    $class_names = $value = ''; 
+    $classes = empty( $item-&gt;classes ) ? array() : (array) $item-&gt;classes;
+    
+    /* Add active class */
+    if(in_array('current-menu-item', $classes)) {
+      $classes[] = 'active';
+      unset($classes['current-menu-item']);
+    }
+    
+    /* Check for children */
+    $children = get_posts(array('post_type' =&gt; 'nav_menu_item', 'nopaging' =&gt; true, 'numberposts' =&gt; 1, 'meta_key' =&gt;'_menu_item_menu_item_parent', 'meta_value' =&gt; $item-&gt;ID));
+    if (!empty($children)) {
+      $classes[] = 'has-sub';
+    }
+    
+    $class_names = join( ' ', apply_filters( 'nav_menu_css_class', array_filter( $classes ), $item, $args ) );
+    $class_names = $class_names ? ' class="' . esc_attr( $class_names ) . '"' : '';
+    
+    $id = apply_filters( 'nav_menu_item_id', 'menu-item-'. $item-&gt;ID, $item, $args );
+    $id = $id ? ' id="' . esc_attr( $id ) . '"' : '';
+    
+    $output .= $indent . '&lt;li' . $id . $value . $class_names .'&gt;';
+    
+    $attributes  = ! empty( $item-&gt;attr_title ) ? ' title="'  . esc_attr( $item-&gt;attr_title ) .'"' : '';
+    $attributes .= ! empty( $item-&gt;target )     ? ' target="' . esc_attr( $item-&gt;target     ) .'"' : '';
+    $attributes .= ! empty( $item-&gt;xfn )        ? ' rel="'    . esc_attr( $item-&gt;xfn        ) .'"' : '';
+    $attributes .= ! empty( $item-&gt;url )        ? ' href="'   . esc_attr( $item-&gt;url        ) .'"' : '';
+    
+    $item_output = $args-&gt;before;
+    $item_output .= '&lt;a'. $attributes .'&gt;&lt;span&gt;';
+    $item_output .= $args-&gt;link_before . apply_filters( 'the_title', $item-&gt;title, $item-&gt;ID ) . $args-&gt;link_after;
+    $item_output .= '&lt;/span&gt;&lt;/a&gt;';
+    $item_output .= $args-&gt;after;
+    
+    $output .= apply_filters( 'walker_nav_menu_start_el', $item_output, $item, $depth, $args );
+  }
+  
+  function end_el( &$output, $item, $depth = 0, $args = array() ) {
+    $output .= "&lt;/li&gt;\n";
+  }
+}      
+</code>
+
+  <h2>Print Menu in a Theme File</h2>
+
+  <p>We now have a menu built and our Walker Class is in place. It's now time to print our menu inside a theme file. To do this we will be using the <strong>wp_nav_menu()</strong> function. Using PHP we will call this function and pass it the parameters of our menu so that it can print out the HTML structure. The <strong>'menu'</strong> parameter is the name of the menu you created back in step 1. The <strong>'container_id'</strong> will add a CSS ID to the menu HTML which we will use in our CSS styles later. The <strong>'Walker'</strong> parameter is telling the wp_nav_menu() function to use our custom Wordpress walker class to print the HTML.</p>
+
+
+  <code>
+  &lt;?php 
+  wp_nav_menu(array(
+    'menu' => 'Main Menu', 
+    'container_id' => 'cssmenu', 
+    'walker' => new CSS_Menu_Walker()
+  )); 
+  ?&gt;  
+  </code>
+
+  <p>Place this PHP code in one of your theme files. Where ever you place it is where your menu will be printed out. I am using the default Wordpress Twenty Thirteen theme so there is a theme file called <strong>header.php</strong> which is where I will place the code.</p>
+
+  <p>If you have done everything correctly up to this point you should see an unstyled HTML list being displayed in your theme. If you are not seeing your menu printed out, double check the previous steps.</p>
+
+  <img src="images/wordpress_2.png" />
+  
+  
+  <h2>Add the CSS</h2>
+  
+  <p>Now it's time to add the styles to our menu and see the fruits of our labor. Go ahead and open up the CSS file for your theme. It might be in a folder called <strong>css/styles.css</strong> or just a file in the root directory of the theme. You can copy and paste all the CSS below into your theme's CSS file at once if you want. I will be breaking the CSS up into parts in order to explain it more easily.</p>
+  
+<p>Notice we are using the same ID that we specified in the wp_nav_menu() function, <strong>#cssmenu</strong>.</p>
+
+<p>This first bit of CSS is just some simple resets to make sure that each browsers is starting from the same point.</p>  
+<code>
+#cssmenu,
+#cssmenu ul,
+#cssmenu li,
+#cssmenu a {
+  border: none;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+</code>
+
+<p>This next bit of CSS will be styling the first level of our drop down menu. One thing to note about this code is the CSS3 gradients that we are using for the background. If the user's browser doesn't support gradients, then we just fill in the background with the color <strong>#3c3c3c</strong></p>
+
+<p>Another style worth noting is the use of the <strong>:after</strong> pseudo class. This lets us add the faint border colors around each menu item which give the design some depth.</p>
+
+<code>
+#cssmenu {
+  height: 37px;
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 1px solid;
+  border-radius: 5px;
+  width: auto;
+  border-color: #080808;
+}
+#cssmenu,
+#cssmenu > ul > li > ul > li a:hover {
+  background: #3c3c3c;
+  background: -moz-linear-gradient(top, #3c3c3c 0%, #222222 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #3c3c3c), color-stop(100%, #222222));
+  background: -webkit-linear-gradient(top, #3c3c3c 0%, #222222 100%);
+  background: -o-linear-gradient(top, #3c3c3c 0%, #222222 100%);
+  background: -ms-linear-gradient(top, #3c3c3c 0%, #222222 100%);
+  background: linear-gradient(top, #3c3c3c 0%, #222222 100%);
+}
+
+#cssmenu > ul {
+  list-style: inside none;
+  padding: 0;
+  margin: 0;
+}
+#cssmenu > ul > li {
+  list-style: inside none;
+  padding: 0;
+  margin: 0;
+  float: left;
+  display: block;
+  position: relative;
+}
+#cssmenu > ul > li > a {
+  outline: none;
+  display: block;
+  position: relative;
+  padding: 12px 20px;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  font-weight: bold;
+  font-size: 13px;
+  font-family: Arial, Helvetica, sans-serif;
+  border-right: 1px solid #080808;
+  color: #ffffff;  
+}
+#cssmenu > ul > li > a:hover {
+  background: #080808;
+  color: #ffffff;
+}
+#cssmenu > ul > li:first-child > a {
+  border-radius: 5px 0 0 5px;
+}
+#cssmenu > ul > li > a:after {
+  content: '';
+  position: absolute;
+  border-right: 1px solid;
+  top: -1px;
+  bottom: -1px;
+  right: -2px;
+  z-index: 99;
+  border-color: #3c3c3c;  
+}
+</code>
+
+
+
+<p>At this point your menu should look something like the image below. If it doesn't, circle back and double check all the CSS is correct. </p>
+
+<img src="images/wordpress_3.png" />
+  
+  
+<p>Next we need to style the sub menus. We will want them to be hidden by default and then shown when the user hovers over the parent item. This can be accomplished using pure CSS. </p>
+
+<p>First we will want to set all the sub menu UL to <strong>display: none;</strong>. Then we will use the <strong>:hover</strong> pseudo class on the sub menu to <strong>display: block;</strong>. This has the effect of hiding and showing the sub menu when the user hovers over a parent item.</p>
+  
+    
+<code>
+#cssmenu ul li.has-sub:hover > a:after {
+  top: 0;
+  bottom: 0;
+}
+#cssmenu > ul > li.has-sub > a:before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  right: 6px;
+  border: 5px solid transparent;
+  border-top: 5px solid #ffffff;
+}
+#cssmenu > ul > li.has-sub:hover > a:before {
+  top: 19px;
+}
+#cssmenu ul li.has-sub:hover > a {
+  background: #3f3f3f;
+  border-color: #3f3f3f;
+  padding-bottom: 13px;
+  padding-top: 13px;
+  top: -1px;
+  z-index: 999;
+}
+#cssmenu ul li.has-sub:hover > ul,
+#cssmenu ul li.has-sub:hover > div {
+  display: block;
+}
+#cssmenu ul li.has-sub > a:hover {
+  background: #3f3f3f;
+  border-color: #3f3f3f;
+}
+#cssmenu ul li > ul,
+#cssmenu ul li > div {
+  display: none;
+  width: auto;
+  position: absolute;
+  top: 38px;
+  padding: 10px 0;
+  background: #3f3f3f;
+  border-radius: 0 0 5px 5px;
+  z-index: 999;
+}
+#cssmenu ul li > ul {
+  width: 200px;
+}
+#cssmenu ul li > ul li {
+  display: block;
+  list-style: inside none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+#cssmenu ul li > ul li a {
+  outline: none;
+  display: block;
+  position: relative;
+  margin: 0;
+  padding: 8px 20px;
+  font: 10pt Arial, Helvetica, sans-serif;
+  color: #ffffff;
+  text-decoration: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+#cssmenu ul ul a:hover {
+  color: #ffffff;
+}
+#cssmenu > ul > li.has-sub > a:hover:before {
+  border-top: 5px solid #ffffff;
+}
+
+</code>
+  
+<p>That's it! If you did everything correctly you should have brand new Wordpress drop down menu. If things don't seem right check out the troubleshooting below.</p>
+
+<h2>Troubleshooting</h2>
+
+<p>If your menu doesn't seem to be function correctly, or it looks a little off then it is possible you are experiencing residual styling from your Wordpress theme. This means that there are other CSS styles in your theme that are conflicting with our menu styles. The only way to fix this problem is to track down the other CSS styles and remove them. Your best bet is to use the Firebug extension for Firefox and inspect the CSS styles manually. Once you find the conflicting styles remove or delete them.</p>
+
+
+
+  
+  
+  
+</body>
+</html>
