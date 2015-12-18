@@ -1,6 +1,7 @@
 # freepixelmedia.com
 
-Static HTML portfolio website containing various projects.
+Express.js app that just servers up a static HTML portfolio website containing various projects.
+
 
 ## Running Locally
 
@@ -8,5 +9,16 @@ Static HTML portfolio website containing various projects.
 nodemon server.js
 ```
 
-http://localhost:3000
+Visit `http://localhost:3000` in your browser.
+
+
+## Deploy to Heroku
+
+```
+git add .
+git commit -m 'message'
+git push origin master
+git push heroku master
+```
+
 
