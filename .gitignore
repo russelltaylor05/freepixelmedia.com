@@ -1,2 +1,3 @@
 cgi_bin*
 node_modules*
+.DS*

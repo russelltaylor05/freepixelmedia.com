@@ -2,8 +2,10 @@
   "name": "freepixelmedia.com",
   "version": "1.0.0",
   "description": "Portfolio website containing various projects",
-  "main": "gulpfile.js",
+  "main": "server.js",
   "dependencies": {
+    "body-parser": "^1.14.2",
+    "cookie-parser": "^1.4.0",
     "express": "^4.13.3",
     "gulp": "^3.9.0"
   },
